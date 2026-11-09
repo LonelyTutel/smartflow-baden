@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartFlow Ba Den — 16:9 Canva Embed Interactive Prototype (1920x1080)</title>
+  <style>
+    :root {
+      --vlu-crimson: #A6192E;
+      --vlu-navy: #002855;
+      --vlu-gold: #D4AF37;
+      --bg-light: #F4F6F9;
+      --card-bg: #FFFFFF;
+      --text-dark: #1A2530;
+      --text-sub: #5A6A85;
+      --accent-green: #00875A;
+      --accent-orange: #E65100;
+      --accent-red: #DE350B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* Strict 16:9 Canvas Layout (1920px x 1080px) */
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-light);
+      color: var(--text-dark);
+    }
+    .canvas-16x9 {
+      width: 1920px;
+      height: 1080px;
+      margin: 0 auto;
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background: var(--bg-light);
+    }
+    
+    /* Top Header Bar */
+    .header {
+      background: var(--vlu-navy);
+      color: white;
+      padding: 16px 28px;
+      border-bottom: 4px solid var(--vlu-crimson);
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(0,40,85,0.18);
+      height: 76px;
+    }
+    .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.3px; }
+    .header .subtitle { font-size: 13.5px; color: var(--vlu-gold); margin-top: 3px; font-weight: 600; }
+    .badge-live { background: var(--vlu-crimson); color: white; padding: 6px 16px; border-radius: 20px; font-size: 12.5px; font-weight: bold; border: 1.5px solid var(--vlu-gold); }
+    
+    /* Sun World Operating Hours Bar */
+    .mode-bar {
+      background: white;
+      border: 1px solid #DCE1E8;
+      border-radius: 10px;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      height: 52px;
+    }
+    .mode-options button {
+      padding: 7px 16px;
+      border: 1.5px solid var(--vlu-navy);
+      background: white;
+      color: var(--vlu-navy);
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: all 0.2s ease;
+    }
+    .mode-options button.active { background: var(--vlu-navy); color: white; }
+    .mode-options button:hover { transform: translateY(-1px); }
+
+    /* Main Content Grid: 1.25fr Left (Map & B2B Dashboard) : 1fr Right (Realistic Phone Mockup) */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 24px;
+      height: 890px;
+      align-items: stretch;
+    }
+    
+    .card {
+      background: white;
+      border: 1px solid #E2E7ED;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--vlu-navy);
+      margin-bottom: 12px;
+      border-bottom: 2px solid #F0F3F7;
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .map-tabs { display: flex; gap: 10px; margin-bottom: 12px; }
+    .map-btn { padding: 8px 16px; font-size: 12.5px; font-weight: 700; border: 1.5px solid #D0D7DE; border-radius: 6px; background: #F8F9FA; cursor: pointer; transition: all 0.2s; }
+    .map-btn.active { background: var(--vlu-crimson); color: white; border-color: var(--vlu-crimson); box-shadow: 0 2px 5px rgba(166,25,46,0.25); }
+    
+    /* Clean Map Container - Fixed Black Box Issue */
+    .map-container {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1.5px solid #E0E4E9;
+      background: #F8F9FA;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .map-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .map-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,40,85,0.92);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: bold;
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--vlu-gold);
+    }
+
+    .time-slot-picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+    .slot-btn { padding: 10px 6px; font-size: 11px; font-weight: bold; text-align: center; border: 1.5px solid #D0D7DE; background: #F6F8FA; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+    .slot-btn:hover { border-color: var(--vlu-crimson); background: #FFF5F6; }
+    .slot-btn.active { background: var(--vlu-crimson); color: white; border-color: var(--vlu-crimson); box-shadow: 0 3px 6px rgba(166,25,46,0.25); }
+    .slot-time { font-size: 12px; font-weight: 800; display: block; margin-bottom: 2px; }
+
+    /* Density Bar */
+    .progress-bg { background: #E9ECEF; border-radius: 10px; height: 14px; width: 100%; overflow: hidden; margin-top: 6px; }
+    .progress-fill { height: 100%; background: var(--vlu-crimson); width: 0%; transition: width 0.4s ease, background-color 0.4s ease; }
+
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F0F3F7; font-size: 13.5px; }
+    .stat-val { font-weight: 800; font-size: 14px; color: var(--vlu-navy); }
+    
+    .alert-box { background: #FFF9F9; border-left: 5px solid var(--vlu-crimson); padding: 14px 16px; border-radius: 8px; margin-top: 12px; border: 1px solid #FFE0E0; transition: all 0.3s ease; }
+    .alert-header { color: var(--vlu-crimson); font-weight: 800; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
+    /* REALISTIC SMARTPHONE FRAME MOCKUP (Optimized for 16:9 Canvas Height) */
+    .phone-wrapper { display: flex; justify-content: center; align-items: center; height: 100%; }
+    .phone-mockup {
+      width: 410px;
+      height: 820px;
+      background: #FFFFFF;
+      border-radius: 44px;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.18), 0 0 0 10px #1E293B;
+      border: 3px solid #334155;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Dynamic Island & Status Bar */
+    .phone-status-bar {
+      height: 40px;
+      background: var(--vlu-navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      color: white;
+      font-size: 11.5px;
+      font-weight: 700;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .dynamic-island {
+      width: 100px;
+      height: 20px;
+      background: #000;
+      border-radius: 12px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 6px;
+    }
+
+    /* Zalo Mini App Navigation Bar */
+    .app-header {
+      background: linear-gradient(135deg, var(--vlu-navy) 0%, #001A38 100%);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid var(--vlu-gold);
+    }
+    .app-brand { display: flex; align-items: center; gap: 10px; }
+    .app-logo { width: 36px; height: 36px; background: var(--vlu-crimson); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 14px; border: 1.5px solid var(--vlu-gold); }
+    .app-title { font-size: 15px; font-weight: 800; letter-spacing: -0.2px; color: white; }
+    .app-subtitle { font-size: 10.5px; color: var(--vlu-gold); font-weight: 600; }
+
+    /* Phone Body Scrollable Content */
+    .phone-body {
+      flex: 1;
+      background: #F0F2F5;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    /* Tourist Greeting Banner */
+    .user-welcome {
+      background: white;
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .user-info h4 { font-size: 13.5px; color: var(--vlu-navy); font-weight: 800; }
+    .user-info p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+    /* Detailed Zalo AI Notification Card */
+    .zalo-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 14px rgba(166, 25, 46, 0.12);
+      border-left: 5px solid var(--vlu-crimson);
+      border-top: 1px solid #FFE5E8;
+      border-right: 1px solid #FFE5E8;
+      border-bottom: 1px solid #FFE5E8;
+    }
+    .zalo-badge { display: inline-flex; align-items: center; gap: 4px; background: #FFF0F2; color: var(--vlu-crimson); font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 12px; margin-bottom: 8px; }
+    .zalo-card-title { font-size: 13.5px; font-weight: 800; color: var(--vlu-crimson); margin-bottom: 6px; line-height: 1.35; }
+    .zalo-card-desc { font-size: 12px; color: #333; line-height: 1.45; margin-bottom: 12px; }
+    
+    .zalo-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--vlu-crimson) 0%, #8B0000 100%);
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 8px rgba(166, 25, 46, 0.25);
+    }
+
+    /* Real-Time Cable Car Queue List */
+    .mini-section-title { font-size: 12.5px; font-weight: 800; color: var(--vlu-navy); margin: 12px 0 6px 0; display: flex; justify-content: space-between; }
+    .queue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .queue-box { background: white; border-radius: 10px; padding: 12px; border: 1px solid #E2E8F0; }
+    .queue-name { font-size: 11px; font-weight: 700; color: var(--text-sub); }
+    .queue-num { font-size: 17px; font-weight: 900; margin: 3px 0; }
+    .queue-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; display: inline-block; }
+
+    /* GenAI Cultural Storyteller Widget */
+    .audio-card {
+      background: linear-gradient(135deg, #002855 0%, #001530 100%);
+      color: white;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border: 1px solid var(--vlu-gold);
+    }
+    .audio-tag { color: var(--vlu-gold); font-size: 10px; font-weight: 800; }
+    .audio-title { font-size: 12.5px; font-weight: 700; margin: 4px 0 6px 0; }
+    .audio-bar { background: rgba(255,255,255,0.12); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+
+    /* FastPass Ticket QR Preview */
+    .ticket-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px dashed var(--vlu-gold);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .qr-placeholder { width: 48px; height: 48px; background: var(--vlu-navy); border-radius: 6px; color: var(--vlu-gold); display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 900; text-align: center; }
+
+    /* Bottom Navigation */
+    .phone-nav {
+      height: 56px;
+      background: white;
+      border-top: 1px solid #E2E8F0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      text-align: center;
+    }
+    .phone-nav-item { color: var(--text-sub); font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .phone-nav-item.active { color: var(--vlu-crimson); font-weight: 900; }
+  </style>
+</head>
+<body>
+
+<div class="canvas-16x9">
+  <!-- Top Navigation Header -->
+  <div class="header">
+    <div>
+      <h1>SmartFlow Ba Den — 16:9 Interactive Demo (1920×1080)</h1>
+      <div class="subtitle">AI Predictive Visitor Flow & Dynamic Routing Control System | WCST 2026 Interactive Demo</div>
+    </div>
+    <div class="badge-live">● LIVE DEMO SIMULATION</div>
+  </div>
+
+  <!-- Sun World Operating Mode Bar -->
+  <div class="mode-bar">
+    <div>
+      <strong style="color: var(--vlu-navy); font-size: 14px;">🗓️ Sun World Operating Hours Mode:</strong>
+      <span id="hours-display" style="font-size: 13px; color: #444; margin-left: 10px; font-weight: 600;">Mon - Fri: 06:00 - 20:00 (Spiritual Zone till 19:30)</span>
+    </div>
+    <div class="mode-options">
+      <button id="btn-wd" class="active" onclick="setDayMode('weekday')">Mon - Fri Mode</button>
+      <button id="btn-we" onclick="setDayMode('weekend')">Sat - Sun Mode (05:30 - 21:00)</button>
+    </div>
+  </div>
+
+  <div class="grid-main">
+    <!-- Left Column: Sun World Map & B2B Control Dashboard -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="card" style="flex: 1.2;">
+        <div class="card-title">
+          <span>1. Sun World Real Map & Density Simulation</span>
+        </div>
+
+        <div class="map-tabs">
+          <button id="tab-map1" class="map-btn active" onclick="switchMap('overall')">🗺️ 1. Overall Resort Map (Sơ Đồ Toàn Cảnh)</button>
+          <button id="tab-map2" class="map-btn" onclick="switchMap('peak')">🏔️ 2. Peak Area 986m Map (Sơ Đồ Đỉnh Tâm Linh)</button>
+        </div>
+
+        <div class="map-container">
+          <img id="main-map-img" src="" alt="Sun World Ba Den Map" class="map-img">
+          <div id="map-badge" class="map-overlay">📍 Zone: Cable Car Stations & Resort Base</div>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <strong style="font-size: 13.5px; color: var(--vlu-navy);">🕒 Select Time Slot Across Operating Hours:</strong>
+          <div class="time-slot-picker">
+            <div id="slot-0" class="slot-btn" onclick="selectSlot(0)"><span class="slot-time">05:30 - 07:00</span><span>Dawn / Early</span></div>
+            <div id="slot-1" class="slot-btn" onclick="selectSlot(1)"><span class="slot-time">08:30 - 10:00</span><span>Morning Surge</span></div>
+            <div id="slot-2" class="slot-btn active" onclick="selectSlot(2)"><span class="slot-time">10:30 - 12:30</span><span>Festival Peak</span></div>
+            <div id="slot-3" class="slot-btn" onclick="selectSlot(3)"><span class="slot-time">14:00 - 16:00</span><span>Afternoon Lull</span></div>
+            <div id="slot-4" class="slot-btn" onclick="selectSlot(4)"><span id="slot4-label" class="slot-time">18:00 - 19:30</span><span>Evening Shift</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="flex: 1;">
+        <div class="card-title">2. AI Predictive Analytics & Dynamic Engine Output</div>
+        
+        <div style="margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700;">
+            <span>Overall Visitor Density Level:</span>
+            <span id="density-txt" style="color: var(--vlu-crimson);">96% (CRITICAL OVERCAPACITY)</span>
+          </div>
+          <div class="progress-bg">
+            <div id="density-bar" class="progress-fill" style="width: 96%; background-color: var(--vlu-crimson);"></div>
+          </div>
+        </div>
+
+        <div class="stat-row">
+          <span>Peak 986m Weather Sensor:</span>
+          <span id="weather-val" class="stat-val">31°C | UV 9 (High) | Wind 14 km/h</span>
+        </div>
+        <div class="stat-row">
+          <span>Cable Car Station A Queue Forecast:</span>
+          <span id="queue-val" class="stat-val" style="color: var(--vlu-crimson);">58 Mins (Bottlenecking)</span>
+        </div>
+        <div class="stat-row">
+          <span>3D Mapping Exhibition Capacity:</span>
+          <span id="cap-val" class="stat-val" style="color: var(--vlu-navy);">35% Utilized (Available 15,000/day)</span>
+        </div>
+
+        <div id="alert-console" class="alert-box">
+          <div id="alert-title" class="alert-header">🚨 AI DYNAMIC REROUTING DISPATCHED (10:30 AM PEAK)</div>
+          <div id="alert-body" style="font-size: 12.5px;">
+            <strong>Cause:</strong> Station A Cable Car Queue predicted > 50 mins during festival peak (>100k daily visitors).<br>
+            <strong>AI Action:</strong> Push Zalo Mini App notification diverting 2,500 pilgrims to <strong>3D Mapping Exhibition Space</strong>.<br>
+            <strong>Outcome:</strong> 35% queue reduction within 15 minutes.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Smartphone Mockup for Tourist View -->
+    <div class="card" style="padding: 16px; height: 100%;">
+      <div class="card-title">
+        <span>3. Zalo Mini App Tourist Mobile View</span>
+        <span style="font-size: 11px; color: var(--vlu-crimson); font-weight: 700;">Interactive Smartphone Preview</span>
+      </div>
+
+      <div class="phone-wrapper">
+        <div class="phone-mockup">
+          <!-- Top Phone Status Bar -->
+          <div class="phone-status-bar">
+            <span>09:41</span>
+            <div class="dynamic-island"></div>
+            <span>5G ⚡ 100%</span>
+          </div>
+
+          <!-- Zalo App Header -->
+          <div class="app-header">
+            <div class="app-brand">
+              <div class="app-logo">SF</div>
+              <div>
+                <div class="app-title">SmartFlow Bà Đen</div>
+                <div class="app-subtitle">Trợ lý Du lịch AI • Zalo Mini App</div>
+              </div>
+            </div>
+            <div style="font-size: 16px; cursor: pointer;">🔔</div>
+          </div>
+
+          <!-- Phone Scrollable Body -->
+          <div class="phone-body">
+            <!-- User Welcome Card -->
+            <div class="user-welcome">
+              <div class="user-info">
+                <h4>Xin chào, Nguyễn Văn A 👋</h4>
+                <p>Hành trình Núi Bà Đen • 986m</p>
+              </div>
+              <div id="zalo-weather-tag" style="background: #FFF3E0; color: #E65100; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 10px; border: 1px solid #FFE0B2;">
+                ☀️ 31°C • UV 9
+              </div>
+            </div>
+
+            <!-- Detailed Zalo AI Smart Notification Card -->
+            <div class="zalo-card">
+              <div id="zalo-badge" class="zalo-badge">✨ GỢI Ý ĐIỀU HƯỚNG AI THỜI GIAN THỰC</div>
+              <div id="zalo-card-title" class="zalo-card-title">⚠️ Ga Cáp Treo Vân Sơn quá tải (Xếp hàng ~58 phút)!</div>
+              <div id="zalo-card-desc" class="zalo-card-desc">
+                AI khuyến nghị bạn chuyển sang <strong>Triển lãm 3D Mapping Linh Sơn Thánh Mẫu</strong>. Thời gian chờ &lt; 3 phút • Giảm ngay 35% áp lực hàng chờ!
+              </div>
+              <button class="zalo-btn" onclick="alert('🎉 Bạn đã nhận được FastPass Lối Đi Riêng sang Triển lãm 3D Mapping!')">
+                <span>🚀 Đổi Lộ Trình & Nhận FastPass Ưu Tiên</span>
+              </button>
+            </div>
+
+            <!-- Live Cable Car Status Grid -->
+            <div class="mini-section-title">
+              <span>⏱️ Hàng chờ Cáp treo Thời gian thực</span>
+              <span style="font-size: 9.5px; color: var(--vlu-crimson); font-weight: 700;">Live</span>
+            </div>
+            <div class="queue-grid">
+              <div class="queue-box">
+                <div class="queue-name">Tuyến Đỉnh Vân Sơn</div>
+                <div id="zalo-q1-time" class="queue-num" style="color: var(--accent-red);">58 phút</div>
+                <div id="zalo-q1-tag" class="queue-tag" style="background: #FFEBE6; color: var(--accent-red);">Ùn tắc cao điểm</div>
+              </div>
+              <div class="queue-box">
+                <div class="queue-name">Triển lãm 3D Mapping</div>
+                <div id="zalo-q2-time" class="queue-num" style="color: var(--accent-green);">&lt; 3 phút</div>
+                <div id="zalo-q2-tag" class="queue-tag" style="background: #E3FCEF; color: var(--accent-green);">Thông thoáng</div>
+              </div>
+            </div>
+
+            <!-- GenAI Cultural Storyteller Widget -->
+            <div class="audio-card">
+              <div class="audio-tag">🎧 GENAI CULTURAL STORYTELLER</div>
+              <div class="audio-title">Sự Tích Linh Sơn Thánh Mẫu & Núi Thiêng</div>
+              <div class="audio-bar">
+                <span>► Đang phát: Tập 1 - Sự tích Phật Bà</span>
+                <span style="color: var(--vlu-gold); font-weight: 800; cursor: pointer;" onclick="alert('🎧 Audio thuyết minh AI đang phát...')">▶ PLAY</span>
+              </div>
+            </div>
+
+            <!-- Smart FastPass Ticket Card -->
+            <div class="ticket-card">
+              <div class="qr-placeholder">QR PASS<br>SMARTFLOW</div>
+              <div style="font-size: 10.5px;">
+                <strong style="color: var(--vlu-navy);">Vé Số Tích Hợp (IDP FastPass)</strong>
+                <div style="color: var(--text-sub); margin-top: 1px;">Mã đặt chỗ: <strong>SF-889240</strong></div>
+                <div id="zalo-recom-slot" style="color: var(--vlu-crimson); font-weight: 800; margin-top: 2px;">Khung giờ vàng AI: 10:45 - 11:15</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smartphone Bottom Navigation Bar -->
+          <div class="phone-nav">
+            <div class="phone-nav-item active">
+              <span style="font-size: 14px;">🗺️</span>
+              <span>Khám phá</span>
+            </div>
+            <div class="phone-nav-item">
+              <span style="font-size: 14px;">🎧</span>
+              <span>Thuyết minh</span>
+            </div>
+            <div class="phone-nav-item">
+              <span style="font-size: 14px;">🎟️</span>
+              <span>Vé của tôi</span>
+            </div>
+            <div class="phone-nav-item">
+              <span style="font-size: 14px;">👤</span>
+              <span>Tài khoản</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- JavaScript Interaction Engine -->
+  <script>
+    // Embedded Base64 Data URIs to eliminate broken local file paths & black box errors
+    let imgMap1 = "";
+    let imgMap2 = "";
+
+    let currentDayMode = 'weekday';
+    let currentMap = 'overall';
+    let currentSlot = 2;
+
+    const slotData = [
+      {
+        timeLabel: "05:30 - 07:00",
+        slotTitle: "Dawn / Early Pilgrimage",
+        densityPct: 22,
+        densityTxt: "22% (Optimal Flow / Clear)",
+        densityColor: "#00875A",
+        weather: "21°C | Sương mù nhẹ | UV 2 (Low)",
+        queue: "8 Mins (Minimal Wait)",
+        queueColor: "#00875A",
+        cap3D: "12% Utilized (Open)",
+        alertTitle: "✅ OPTIMAL FLOW: EARLY MORNING DAWN",
+        alertBody: "<strong>Status:</strong> Cable car stations operating smoothly.<br><strong>AI Action:</strong> Promoting Peak 986m Sunrise Viewing & Cable Car Vân Sơn route for early pilgrims.<br><strong>Outcome:</strong> Seamless check-in experience.",
+        zaloWeather: "🌫️ 21°C • UV 2",
+        zaloBadge: "✨ LỘ TRÌNH THÔNG THOÁNG BÌNH MINH",
+        zaloTitle: "🌅 Đón Bình Minh Đỉnh 986m - Cáp treo thông thoáng (Chờ 8 phút)!",
+        zaloDesc: "Thời điểm lý tưởng để chiêm bái Tượng Phật Bà Tây Bổ Đà Sơn trong sương sớm. Cáp treo đang vận hành mượt mà!",
+        zaloQ1Time: "8 phút",
+        zaloQ1Tag: "Thông thoáng",
+        zaloQ1TagBg: "#E3FCEF",
+        zaloQ1TagColor: "#00875A",
+        zaloSlotMsg: "Khung giờ vàng AI: 06:00 - 07:30"
+      },
+      {
+        timeLabel: "08:30 - 10:00",
+        slotTitle: "Morning Tour Surge",
+        densityPct: 68,
+        densityTxt: "68% (Moderate - High Load)",
+        densityColor: "#E65100",
+        weather: "27°C | Trời quang | UV 6 (Moderate)",
+        queue: "32 Mins (Building Queue)",
+        queueColor: "#E65100",
+        cap3D: "45% Utilized",
+        alertTitle: "⚡ PRE-ALERT: MORNING TOUR SURGE DETECTED",
+        alertBody: "<strong>Cause:</strong> Tour buses arriving at lower gates.<br><strong>AI Action:</strong> Balancing passenger load between Cable Car Station Hoa Sen & Station Tâm An.<br><strong>Outcome:</strong> Prevented localized bottlenecking.",
+        zaloWeather: "☀️ 27°C • UV 6",
+        zaloBadge: "⚡ CÂN BẰNG LUỒNG CÁP TREO",
+        zaloTitle: "🔔 Khách đoàn dồn về Ga Vân Sơn (Hàng chờ ~32 phút)",
+        zaloDesc: "AI khuyến nghị bạn cân nhắc chọn Tuyến Cáp Treo Chùa Bà (Ga Hoa Sen) hoặc tham quan quần thể chùa trước để tránh chờ lâu!",
+        zaloQ1Time: "32 phút",
+        zaloQ1Tag: "Đang tăng tải",
+        zaloQ1TagBg: "#FFF3E0",
+        zaloQ1TagColor: "#E65100",
+        zaloSlotMsg: "Khung giờ vàng AI: 09:15 - 09:45"
+      },
+      {
+        timeLabel: "10:30 - 12:30",
+        slotTitle: "Festival Peak Surge",
+        densityPct: 96,
+        densityTxt: "96% (CRITICAL OVERCAPACITY)",
+        densityColor: "#A6192E",
+        weather: "31°C | Nắng nóng | UV 9 (High)",
+        queue: "58 Mins (Critical Bottleneck)",
+        queueColor: "#A6192E",
+        cap3D: "35% Utilized (Available 15,000/day)",
+        alertTitle: "🚨 AI DYNAMIC REROUTING DISPATCHED (10:30 AM PEAK)",
+        alertBody: "<strong>Cause:</strong> Station A Cable Car Queue predicted > 50 mins during festival peak (>100k daily visitors).<br><strong>AI Action:</strong> Push Zalo Mini App notification diverting 2,500 pilgrims to <strong>3D Mapping Exhibition Space</strong>.<br><strong>Outcome:</strong> 35% queue reduction within 15 minutes.",
+        zaloWeather: "☀️ 31°C • UV 9",
+        zaloBadge: "✨ GỢI Ý ĐIỀU HƯỚNG AI THỜI GIAN THỰC",
+        zaloTitle: "⚠️ Ga Cáp Treo Vân Sơn quá tải (Xếp hàng ~58 phút)!",
+        zaloDesc: "AI khuyến nghị bạn chuyển sang <strong>Triển lãm 3D Mapping Linh Sơn Thánh Mẫu</strong>. Thời gian chờ < 3 phút • Giảm ngay 35% áp lực hàng chờ!",
+        zaloQ1Time: "58 phút",
+        zaloQ1Tag: "Ùn tắc cao điểm",
+        zaloQ1TagBg: "#FFEBE6",
+        zaloQ1TagColor: "#DE350B",
+        zaloSlotMsg: "Khung giờ vàng AI: 10:45 - 11:15"
+      },
+      {
+        timeLabel: "14:00 - 16:00",
+        slotTitle: "Afternoon Lull & Return",
+        densityPct: 42,
+        densityTxt: "42% (Moderate Flow / Cooling)",
+        densityColor: "#002855",
+        weather: "32°C | Mây rải rác | UV 5 (Moderate)",
+        queue: "16 Mins (Smooth Flow)",
+        queueColor: "#002855",
+        cap3D: "25% Utilized",
+        alertTitle: "🌤️ GOLDEN HOURS ROUTING: AFTERNOON LULL",
+        alertBody: "<strong>Status:</strong> Cable car queues reduced to 16 mins.<br><strong>AI Action:</strong> Issuing 'Golden Cable Car Hours' alerts to visitors at Peak 986m to return smoothly or visit outdoor photo spots.<br><strong>Outcome:</strong> Smoothed downhill flow.",
+        zaloWeather: "⛅ 32°C • UV 5",
+        zaloBadge: "🌤️ KHUNG GIỜ VÀNG CÁP TREO",
+        zaloTitle: "📸 Cáp treo hạ nhiệt (Chờ 16 phút) - Thời điểm lý tưởng xuống núi!",
+        zaloDesc: "Hàng chờ cáp treo đã giảm mạnh. Bạn có thể thong thả chụp ảnh tại Vườn hoa Đỉnh 986m hoặc di chuyển xuống núi thông thoáng.",
+        zaloQ1Time: "16 phút",
+        zaloQ1Tag: "Dòng khách mượt",
+        zaloQ1TagBg: "#EBF3FF",
+        zaloQ1TagColor: "#002855",
+        zaloSlotMsg: "Khung giờ vàng AI: 14:30 - 15:30"
+      },
+      {
+        timeLabel: "18:00 - 19:30 / 20:30",
+        slotTitle: "Evening Pilgrimage & Closing",
+        densityPct: 74,
+        densityTxt: "74% (Evening Pilgrimage Surge)",
+        densityColor: "#6A1B9A",
+        weather: "24°C | Đêm mát mẻ | Gió 10 km/h",
+        queue: "28 Mins (Evening Peak)",
+        queueColor: "#6A1B9A",
+        cap3D: "60% Utilized (Night Show)",
+        alertTitle: "🌙 EVENING PILGRIMAGE & SPIRITUAL CLOSING ALERT",
+        alertBody: "<strong>Notice:</strong> Spiritual zone closing at 19:30 (Mon-Fri) / 20:30 (Sat-Sun).<br><strong>AI Action:</strong> Guiding pilgrims to Night Illumination Ceremonies at Buddha Statue prior to closing.<br><strong>Outcome:</strong> Respectful, orderly evening departure.",
+        zaloWeather: "🌙 24°C • Đêm mát",
+        zaloBadge: "🌙 LỄ CHIẾU SÁNG & GIỜ ĐÓNG CỬA TÂM LINH",
+        zaloTitle: "✨ Chiêm bái Lễ chiếu sáng Tượng Phật Bà đêm đỉnh 986m",
+        zaloDesc: "Khu tâm linh phục vụ đến 19:30 (T2-T6) / 20:30 (T7-CN). Hãy thưởng thức show ánh sáng nghệ thuật trước khi lên cáp treo xuống núi!",
+        zaloQ1Time: "28 phút",
+        zaloQ1Tag: "Khách chiêm bái đêm",
+        zaloQ1TagBg: "#F3E5F5",
+        zaloQ1TagColor: "#6A1B9A",
+        zaloSlotMsg: "Khung giờ vàng AI: 18:30 - 19:15"
+      }
+    ];
+
+    function selectSlot(idx) {
+      currentSlot = idx;
+      for(let i=0; i<5; i++) {
+        const btn = document.getElementById('slot-' + i);
+        if(btn) {
+          if(i === idx) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      }
+      const data = slotData[idx];
+      document.getElementById('density-txt').innerText = data.densityTxt;
+      document.getElementById('density-txt').style.color = data.densityColor;
+      
+      const bar = document.getElementById('density-bar');
+      bar.style.width = data.densityPct + '%';
+      bar.style.backgroundColor = data.densityColor;
+
+      document.getElementById('weather-val').innerText = data.weather;
+      document.getElementById('queue-val').innerText = data.queue;
+      document.getElementById('queue-val').style.color = data.queueColor;
+      document.getElementById('cap-val').innerText = data.cap3D;
+
+      document.getElementById('alert-title').innerHTML = data.alertTitle;
+      document.getElementById('alert-body').innerHTML = data.alertBody;
+
+      // Update Tourist Smartphone View dynamically
+      document.getElementById('zalo-weather-tag').innerText = data.zaloWeather;
+      document.getElementById('zalo-badge').innerText = data.zaloBadge;
+      document.getElementById('zalo-card-title').innerText = data.zaloTitle;
+      document.getElementById('zalo-card-desc').innerHTML = data.zaloDesc;
+      document.getElementById('zalo-q1-time').innerText = data.zaloQ1Time;
+      document.getElementById('zalo-q1-time').style.color = data.zaloQ1TagColor;
+      
+      const tag1 = document.getElementById('zalo-q1-tag');
+      tag1.innerText = data.zaloQ1Tag;
+      tag1.style.background = data.zaloQ1TagBg;
+      tag1.style.color = data.zaloQ1TagColor;
+
+      document.getElementById('zalo-recom-slot').innerText = data.zaloSlotMsg;
+    }
+
+    function setDayMode(mode) {
+      currentDayMode = mode;
+      const btnWd = document.getElementById('btn-wd');
+      const btnWe = document.getElementById('btn-we');
+      const disp = document.getElementById('hours-display');
+      const s4 = document.getElementById('slot4-label');
+
+      if(mode === 'weekday') {
+        btnWd.classList.add('active');
+        btnWe.classList.remove('active');
+        disp.innerText = "Mon - Fri: 06:00 - 20:00 (Spiritual Zone till 19:30)";
+        s4.innerText = "18:00 - 19:30";
+      } else {
+        btnWe.classList.add('active');
+        btnWd.classList.remove('active');
+        disp.innerText = "Sat - Sun: 05:30 - 21:00 (Spiritual Zone till 20:30)";
+        s4.innerText = "18:00 - 20:30";
+      }
+      selectSlot(currentSlot);
+    }
+
+    function switchMap(type) {
+      currentMap = type;
+      const b1 = document.getElementById('tab-map1');
+      const b2 = document.getElementById('tab-map2');
+      const img = document.getElementById('main-map-img');
+      const badge = document.getElementById('map-badge');
+
+      if(type === 'overall') {
+        b1.classList.add('active');
+        b2.classList.remove('active');
+        if(imgMap1) img.src = imgMap1;
+        badge.innerText = "📍 Zone: Cable Car Stations & Resort Base";
+      } else {
+        b2.classList.add('active');
+        b1.classList.remove('active');
+        if(imgMap2) img.src = imgMap2;
+        badge.innerText = "🏔️ Zone: Peak Area 986m Spiritual Sanctuary";
+      }
+    }
+
+    window.onload = function() {
+      selectSlot(2);
+    };
+  </script>
+</body>
+</html>
